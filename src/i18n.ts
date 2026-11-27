@@ -183,6 +183,8 @@ const es = {
 
   notAffiliated: 'No está afiliado a WhatsApp.',
   madeWith: 'Hecho con',
+  sourceCode: 'Código fuente',
+  licenses: 'Licencias',
   footer: {
     description: 'Hacé stickers a partir de tus fotos y videos, con o sin sonido, sin subir nada.',
     create: 'Crear',
@@ -389,6 +391,8 @@ const en: Texts = {
 
   notAffiliated: 'Not affiliated with WhatsApp.',
   madeWith: 'Made with',
+  sourceCode: 'Source code',
+  licenses: 'Licenses',
   footer: {
     description: 'Make stickers from your photos and videos, with or without sound, without uploading anything.',
     create: 'Create',

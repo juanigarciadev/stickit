@@ -68,7 +68,9 @@ Es GPL porque la aplicación compilada incluye el núcleo de ffmpeg.
 | `lucide-react` | ISC |
 
 Quien publique una copia compilada tiene que ofrecer también el código fuente, incluido el de
-[ffmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm).
+[ffmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm). La web ya lo hace: el pie enlaza a este repositorio y a
+`/licencias.txt`, que `licenses.js` genera al compilar con los avisos de cada dependencia. Si se publica una versión
+modificada, hay que cambiar esos enlaces para que apunten a su propio código.
 
 **La licencia no cubre los GIFs.** Los de `src/assets/gifs` y `src/assets/sprites` son fragmentos de obras y personas
 que pertenecen a sus respectivos dueños. Se usan solo como ejemplo en la portada y no se pueden reutilizar a partir de

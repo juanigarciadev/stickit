@@ -50,6 +50,7 @@ const errorCode = (error: unknown) => (error instanceof Error ? error.message : 
 const formatSize = (bytes: number) =>
   bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`
 const round = (value: number) => Math.round(value * 10) / 10
+const footerLink = 'font-medium underline underline-offset-2'
 const brushCursor = (size: number) => {
   const half = size / 2
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}'><circle cx='${half}' cy='${half}' r='${half - 1}' fill='none' stroke='white'/><circle cx='${half}' cy='${half}' r='${half - 2}' fill='none' stroke='black'/></svg>`
@@ -742,7 +743,13 @@ export default function App() {
             )}
 
             {/* En celular el botón acompaña al desplazarse. */}
-            <div className={ready ? 'anim-pop sticky bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-20 flex flex-col gap-2 lg:static' : 'hidden'}>
+            <div
+              className={
+                ready
+                  ? 'anim-pop sticky bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-20 flex flex-col gap-2 lg:static'
+                  : 'hidden'
+              }
+            >
               <Button
                 className="w-full shadow-lg"
                 icon={<Sparkles size={18} />}
@@ -855,15 +862,18 @@ export default function App() {
           ]}
           labels={{ rights: t.notAffiliated }}
           social={
-            <span>
-              {t.madeWith}{' '}
-              <a
-                href="https://blossomui.vercel.app/"
-                target="_blank"
-                rel="noopener"
-                className="font-medium underline underline-offset-2"
-              >
-                Blossom UI
+            <span className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+              <span>
+                {t.madeWith}{' '}
+                <a href="https://blossomui.vercel.app/" target="_blank" rel="noopener" className={footerLink}>
+                  Blossom UI
+                </a>
+              </span>
+              <a href="https://github.com/juanigarciadev/stickit" target="_blank" rel="noopener" className={footerLink}>
+                {t.sourceCode}
+              </a>
+              <a href="/licencias.txt" target="_blank" rel="license noopener" className={footerLink}>
+                {t.licenses}
               </a>
             </span>
           }

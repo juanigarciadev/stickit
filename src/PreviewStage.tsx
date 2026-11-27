@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import { Button, IconButton } from '@blossomui/react/button'
-import { Check, Eraser, Hand, Maximize2, Minus, Move, Plus, Undo2 } from 'lucide-react'
+import { Check, Eraser, Hand, Maximize2, Minus, Move, Plus, Undo2, X } from 'lucide-react'
 import type { Texts } from './i18n'
 import { ValueSlider } from './ValueSlider'
 
@@ -19,6 +19,8 @@ type Props = {
   onErasing: (erasing: boolean) => void
   brush: number
   onBrush: (size: number) => void
+  /** Mientras se genera solo se puede mirar. */
+  readOnly: boolean
   canUndo: boolean
   onUndo: () => void
   /** El canvas de la vista previa. */
@@ -39,6 +41,7 @@ export function PreviewStage({
   onErasing,
   brush,
   onBrush,
+  readOnly,
   canUndo,
   onUndo,
   children,
@@ -107,7 +110,13 @@ export function PreviewStage({
           : 'relative mx-auto w-full max-w-64'
       }
     >
-      {expanded && (
+      {expanded && readOnly && (
+        <div className="preview-top flex justify-end">
+          <IconButton color="secondary" label={t.close} icon={<X size={18} />} onClick={close} />
+        </div>
+      )}
+
+      {expanded && !readOnly && (
         <div className="preview-top flex items-center justify-between gap-3">
           <IconButton
             color="secondary"
@@ -144,7 +153,7 @@ export function PreviewStage({
             />
           )}
         </div>
-        {expanded && (
+        {expanded && !readOnly && (
           <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full border border-neutral-200 bg-white/90 p-1 shadow-lg backdrop-blur dark:border-neutral-700 dark:bg-neutral-900/90">
             <button
               type="button"
@@ -182,7 +191,7 @@ export function PreviewStage({
         </div>
       )}
 
-      {expanded && (
+      {expanded && !readOnly && (
         <div className="preview-tools mx-auto flex w-full max-w-md flex-col gap-4">
           {/* Siempre ocupa su lugar, para que la imagen no salte al cambiar de herramienta. */}
           <div className={erasing ? '' : 'invisible'}>

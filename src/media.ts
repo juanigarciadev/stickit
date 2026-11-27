@@ -10,6 +10,8 @@ export type Visual = {
   height: number
   frameAt: (time: number) => Promise<CanvasImageSource>
   dispose: () => void
+  /** Otra lectura del mismo material, que se puede recorrer a la vez. */
+  clone: () => Promise<Visual>
 }
 
 export type Background = 'white' | 'black' | 'none'
@@ -74,13 +76,16 @@ export async function loadVisual(file: File): Promise<Visual> {
   const bitmap = await createImageBitmap(file).catch(() => {
     throw new Error('readImage')
   })
-  return {
+  const still: Visual = {
     duration: 0,
     width: bitmap.width,
     height: bitmap.height,
     frameAt: async () => bitmap,
     dispose: () => bitmap.close(),
+    // Los cuadros ya decodificados no cambian: se pueden compartir.
+    clone: async () => ({ ...still, dispose: () => {} }),
   }
+  return still
 }
 
 async function normalizeVideo(file: File) {
@@ -126,6 +131,7 @@ async function loadVideo(file: Blob): Promise<Visual> {
       return video
     },
     dispose: () => URL.revokeObjectURL(url),
+    clone: () => loadVideo(file),
   }
 }
 
@@ -145,7 +151,7 @@ async function loadGif(file: File): Promise<Visual> {
   }
   decoder.close()
 
-  return {
+  const gif: Visual = {
     duration: count > 1 ? total : 0,
     width: frames[0].bitmap.width,
     height: frames[0].bitmap.height,
@@ -154,7 +160,9 @@ async function loadGif(file: File): Promise<Visual> {
       return (frames.find((frame) => at < frame.end) ?? frames[0]).bitmap
     },
     dispose: () => frames.forEach((frame) => frame.bitmap.close()),
+    clone: async () => ({ ...gif, dispose: () => {} }),
   }
+  return gif
 }
 
 let layer: CanvasRenderingContext2D | null = null

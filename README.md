@@ -53,12 +53,25 @@ del navegador a través de [Mediabunny](https://mediabunny.dev/).
 Se probó en Edge (escritorio y pantallas de celular simuladas). El video transparente necesita WebCodecs: Chrome o Edge
 actualizados. iOS no guarda WebM en Fotos.
 
-## Derechos
+## Licencia y derechos
 
-- El código todavía no tiene una licencia publicada.
-- El núcleo de ffmpeg (`@ffmpeg/core`) es **GPL-2.0-or-later** y se distribuye junto con la aplicación compilada.
-- Los GIFs de `src/assets/gifs` y `src/assets/sprites` son fragmentos de obras y personas que **pertenecen a sus
-  respectivos dueños**. Se usan solo como ejemplo en la portada y no se pueden reutilizar a partir de este repositorio.
-  Borrando esas carpetas, la portada muestra emojis (ver [Arquitectura](docs/ARQUITECTURA.md)).
+Copyright (C) 2026 Juan Ignacio García.
+
+El código es software libre bajo la [GNU GPL v3 o posterior](LICENSE) (`GPL-3.0-or-later`), sin ninguna garantía.
+Es GPL porque la aplicación compilada incluye el núcleo de ffmpeg.
+
+| Dependencia | Licencia |
+| --- | --- |
+| [`@ffmpeg/core`](https://github.com/ffmpegwasm/ffmpeg.wasm) (FFmpeg con x264, entre otros) | GPL-2.0-or-later |
+| `@ffmpeg/ffmpeg`, `@ffmpeg/util`, React, fflate | MIT |
+| [`@blossomui/react`](https://github.com/juanigarciadev/BlossomUI), `mediabunny` | MPL-2.0 |
+| `lucide-react` | ISC |
+
+Quien publique una copia compilada tiene que ofrecer también el código fuente, incluido el de
+[ffmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm).
+
+**La licencia no cubre los GIFs.** Los de `src/assets/gifs` y `src/assets/sprites` son fragmentos de obras y personas
+que pertenecen a sus respectivos dueños. Se usan solo como ejemplo en la portada y no se pueden reutilizar a partir de
+este repositorio. Borrando esas carpetas, la portada muestra emojis (ver [Arquitectura](docs/ARQUITECTURA.md)).
 
 StickIt no está afiliado a WhatsApp ni a Meta.

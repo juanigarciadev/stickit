@@ -14,7 +14,8 @@ Todo se procesa en el navegador: tus archivos no se envían a ningún servidor.
   borde de sticker, texto y emojis. La vista previa se puede abrir a pantalla completa.
 - **Sonido:** desde un archivo, el micrófono (con la onda en vivo) o el propio video. Los audios largos se parten en
   varios stickers.
-- **Salida:** PNG y WebP de 512×512, MP4, WebM transparente, M4A, y todo junto en ZIP.
+- **Salida:** PNG y WebP de 512×512, MP4, WebM transparente, M4A (para sumarle audio a una
+  foto), y todo junto en ZIP. Los stickers largos van apareciendo a medida que están listos.
 - Interfaz en español e inglés, tema claro y oscuro según el sistema.
 
 > StickIt prepara los archivos; el sticker se crea desde WhatsApp. Los stickers con sonido están en beta.

@@ -92,6 +92,7 @@ const es = {
 
   generate: (count: number) => (count > 1 ? `Generar ${count} stickers` : 'Generar sticker'),
   generating: 'Generando',
+  readyOf: (done: number, total: number) => `${done}/${total} listos`,
   cancel: 'Cancelar',
   ready: (count: number) => (count > 1 ? `Listos: ${count} stickers` : 'Listo'),
   zip: 'Descargar todo en ZIP',
@@ -300,6 +301,7 @@ const en: Texts = {
 
   generate: (count) => (count > 1 ? `Create ${count} stickers` : 'Create sticker'),
   generating: 'Creating',
+  readyOf: (done, total) => `${done}/${total} ready`,
   cancel: 'Cancel',
   ready: (count) => (count > 1 ? `Ready: ${count} stickers` : 'Ready'),
   zip: 'Download all as ZIP',

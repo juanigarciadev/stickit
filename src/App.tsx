@@ -67,8 +67,6 @@ const output = (name: string, blob: Blob, kind: Output['kind']): Output => ({
   size: blob.size,
   kind,
 })
-const release = (results: Result[]) =>
-  results.forEach((result) => result.files.forEach((file) => URL.revokeObjectURL(file.url)))
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -277,10 +275,16 @@ export default function App() {
 
   // Los resultados viejos dejan de valer si cambia cualquier ajuste.
   useEffect(() => setResults([]), [mode, visual, audio, style, start, total, partLength, from, clip])
-  useEffect(() => () => release(results), [results])
+  // Libera los archivos que dejaron de estar en la lista (la lista crece mientras se genera).
+  const urls = useRef<string[]>([])
+  useEffect(() => {
+    const current = results.flatMap((result) => result.files.map((file) => file.url))
+    urls.current.filter((url) => !current.includes(url)).forEach((url) => URL.revokeObjectURL(url))
+    urls.current = current
+  }, [results])
   // Quedan abajo: se los trae a la vista cuando están listos.
   useEffect(() => {
-    if (results.length) resultsBox.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    if (results.length === 1) resultsBox.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, [results])
 
   const generate = async () => {
@@ -288,6 +292,7 @@ export default function App() {
     stopPlayback()
     setError('')
     setProgress(0)
+    setResults([])
     const controller = new AbortController()
     const { signal } = controller
     job.current = controller
@@ -309,12 +314,18 @@ export default function App() {
           const slice = sliceAudio(audio, start + offset, Math.min(partLength, length - offset))
           const name = count > 1 ? `sticker-${index + 1}` : 'sticker'
           const video = await exportVideo(visual, style, slice.duration, slice, from + offset, report(index), signal)
-          const sound = await exportAudio(slice, signal)
+          // El audio suelto y la imagen solo sirven para el camino "foto + audio" de WhatsApp.
+          // Con un video o un GIF, el sonido ya va dentro del video.
+          const sound = animated ? null : await exportAudio(slice, signal)
+          const image = !animated && index === 0 ? await toPng(await still()) : null
+          signal.throwIfAborted()
           const extension = video.type === 'video/webm' ? 'webm' : 'mp4'
-          const files = [output(`${name}.${extension}`, video, 'video'), output(`${name}.m4a`, sound, 'audio')]
-          // Para el camino "foto + audio" se entrega también la imagen compuesta.
-          if (!animated && index === 0) files.push(output('sticker.png', await toPng(await still()), 'image'))
+          const files = [output(`${name}.${extension}`, video, 'video')]
+          if (sound) files.push(output(`${name}.m4a`, sound, 'audio'))
+          if (image) files.push(output('sticker.png', image, 'image'))
           done.push({ name, seconds: slice.duration, files })
+          // Cada sticker aparece apenas está listo.
+          setResults([...done])
         }
       } else if (animated) {
         const video = await exportVideo(visual, style, clipLength, null, from, report(0), signal)
@@ -330,7 +341,7 @@ export default function App() {
       signal.throwIfAborted()
       setResults(done)
     } catch (reason) {
-      release(done)
+      // Los que ya salieron se conservan, aunque se cancele o falle uno.
       if (!signal.aborted) setError(errorCode(reason))
     } finally {
       // Un proceso cancelado no debe tocar el estado del que lo reemplazó.
@@ -452,6 +463,8 @@ export default function App() {
   }
 
   const busy = progress !== null
+  // Mientras se genera no se puede tocar nada de los ajustes: cambiarlos descartaría lo ya hecho.
+  const lock = busy ? ({ inert: '' } as object) : {}
   // Hasta que no hay un archivo, solo se muestra por dónde empezar.
   const ready = !!visual
   const removeLabel = { remove: t.remove }
@@ -526,6 +539,7 @@ export default function App() {
 
           <fieldset disabled={busy} className="contents">
             <div
+              {...lock}
               className={`anim-up flex min-w-0 flex-col gap-5 ${ready ? '' : 'mx-auto w-full max-w-xl lg:col-span-3'}`}
             >
               <Section title={`1. ${t.visualTitle}`}>
@@ -660,6 +674,7 @@ export default function App() {
             </div>
 
             <div
+              {...lock}
               className={ready ? 'anim-up flex min-w-0 flex-col gap-5' : 'hidden'}
               style={{ animationDelay: '100ms' }}
             >
@@ -765,7 +780,7 @@ export default function App() {
             </div>
             {busy && (
               <>
-                <ProgressBar value={Math.round(progress)} color="accent" label={t.generating} showValue />
+                <ProgressBar value={Math.round(progress)} color="accent" label={count > 1 ? `${t.generating} · ${t.readyOf(results.length, count)}` : t.generating} showValue />
                 <Button className="w-full" color="red" icon={<X size={16} />} onClick={cancel}>
                   {t.cancel}
                 </Button>
@@ -781,7 +796,7 @@ export default function App() {
 
           {results.length > 0 && (
             <div ref={resultsBox} className="anim-up scroll-mt-24 lg:col-span-3">
-              <Section title={t.ready(results.length)}>
+              <Section title={busy && count > 1 ? t.readyOf(results.length, count) : t.ready(results.length)}>
                 {files.length > 1 && (
                   <Button
                     className="w-full"
@@ -793,13 +808,12 @@ export default function App() {
                   </Button>
                 )}
                 <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                  {results.map((result, position) => {
+                  {results.map((result) => {
                     const [main] = result.files
                     return (
                       <li
                         key={main.url}
-                        style={{ animationDelay: `${150 + Math.min(position, 11) * 80}ms` }}
-                        className="anim-pop flex min-w-0 flex-col gap-2"
+                                                className="anim-pop flex min-w-0 flex-col gap-2"
                       >
                         {main.kind === 'video' ? (
                           <video

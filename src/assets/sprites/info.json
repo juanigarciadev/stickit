@@ -1,0 +1,77 @@
+{
+  "shrek": {
+    "frames": 40,
+    "rows": 5,
+    "duration": 4.1
+  },
+  "homero": {
+    "frames": 7,
+    "rows": 1,
+    "duration": 0.7
+  },
+  "zuckerberg": {
+    "frames": 40,
+    "rows": 5,
+    "duration": 5.29
+  },
+  "chico-computadora": {
+    "frames": 40,
+    "rows": 5,
+    "duration": 5.33
+  },
+  "dumbledore": {
+    "frames": 34,
+    "rows": 5,
+    "duration": 2.38
+  },
+  "mi-villano-favorito": {
+    "frames": 28,
+    "rows": 4,
+    "duration": 1.68
+  },
+  "bill-y-ted": {
+    "frames": 40,
+    "rows": 5,
+    "duration": 2.96
+  },
+  "carl-sagan": {
+    "frames": 28,
+    "rows": 4,
+    "duration": 3.93
+  },
+  "its-happening": {
+    "frames": 34,
+    "rows": 5,
+    "duration": 3.4
+  },
+  "cabeza-explota": {
+    "frames": 16,
+    "rows": 2,
+    "duration": 1.28
+  },
+  "colbert": {
+    "frames": 40,
+    "rows": 5,
+    "duration": 3.38
+  },
+  "sr-burns": {
+    "frames": 8,
+    "rows": 1,
+    "duration": 0.96
+  },
+  "joker": {
+    "frames": 7,
+    "rows": 1,
+    "duration": 0.7
+  },
+  "homelander": {
+    "frames": 16,
+    "rows": 2,
+    "duration": 1.6
+  },
+  "neymar": {
+    "frames": 24,
+    "rows": 3,
+    "duration": 2.4
+  }
+}

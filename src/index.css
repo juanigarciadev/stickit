@@ -103,3 +103,37 @@ body { padding-inline: env(safe-area-inset-left) env(safe-area-inset-right); }
   .fullscreen-safe > .preview-top { grid-column: 2; grid-row: 1; }
   .fullscreen-safe > .preview-tools { grid-column: 2; grid-row: 2; justify-content: flex-end; overflow-y: auto; }
 }
+
+/* Barras del reproductor: fina, con lo recorrido pintado según --fill. */
+.media-range { -webkit-appearance: none; appearance: none; height: 1rem; background: transparent; cursor: pointer; }
+.media-range::-webkit-slider-runnable-track {
+  height: 5px;
+  border-radius: 99px;
+  background: linear-gradient(to right, var(--blossom-accent) var(--fill), rgb(128 128 128 / 0.35) var(--fill));
+}
+.media-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px;
+  height: 13px;
+  margin-top: -4px;
+  border-radius: 99px;
+  background: var(--blossom-accent);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+}
+.media-range::-moz-range-track { height: 5px; border-radius: 99px; background: rgb(128 128 128 / 0.35); }
+.media-range::-moz-range-progress { height: 5px; border-radius: 99px; background: var(--blossom-accent); }
+.media-range::-moz-range-thumb { width: 13px; height: 13px; border: 0; border-radius: 99px; background: var(--blossom-accent); }
+.media-range:focus-visible { outline: 2px solid var(--blossom-accent); outline-offset: 2px; border-radius: 99px; }
+
+/* Lo que no se puede tocar mientras se genera. */
+[inert] { opacity: 0.55; }
+
+/* Sobre el video: barra más fina, pista clara y el punto solo al usarla. */
+.media-range-light::-webkit-slider-runnable-track {
+  height: 3px;
+  background: linear-gradient(to right, #4ade80 var(--fill), rgb(255 255 255 / 0.35) var(--fill));
+}
+.media-range-light::-webkit-slider-thumb { width: 11px; height: 11px; margin-top: -4px; background: #fff; }
+.media-range-light::-moz-range-track { height: 3px; background: rgb(255 255 255 / 0.35); }
+.media-range-light::-moz-range-progress { height: 3px; background: #4ade80; }
+.media-range-light::-moz-range-thumb { width: 11px; height: 11px; background: #fff; }

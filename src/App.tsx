@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import { Alert } from '@blossomui/react/alert'
-import { Button } from '@blossomui/react/button'
+import { Button, IconButton } from '@blossomui/react/button'
 import { FileUpload } from '@blossomui/react/file-upload'
 import { Footer } from '@blossomui/react/footer'
 import { Navbar } from '@blossomui/react/navbar'
@@ -8,12 +8,13 @@ import { ProgressBar } from '@blossomui/react/progress-bar'
 import { SegmentedControl } from '@blossomui/react/segmented-control'
 import { Stepper } from '@blossomui/react/stepper'
 import { zipSync } from 'fflate'
-import { Download, FileArchive, Image, Mic, Music, Sparkles, Square, Sticker, X } from 'lucide-react'
+import { ArrowRight, Download, FileArchive, Image, Mic, Music, Sparkles, Square, Sticker, X } from 'lucide-react'
 import { initialLanguage, texts, type ErrorCode, type Language } from './i18n'
 import { AnimatedMenu } from './AnimatedMenu'
 import { Controls } from './Controls'
 import { Landing } from './Landing'
 import { PreviewStage } from './PreviewStage'
+import { ResultMedia } from './ResultMedia'
 import { Reveal } from './Reveal'
 import {
   SIZE,
@@ -50,6 +51,8 @@ const errorCode = (error: unknown) => (error instanceof Error ? error.message : 
 const formatSize = (bytes: number) =>
   bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`
 const round = (value: number) => Math.round(value * 10) / 10
+const floating =
+  'anim-up fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-40 flex flex-col gap-3 rounded-2xl border border-neutral-200 bg-white/95 p-4 shadow-2xl backdrop-blur dark:border-neutral-700 dark:bg-neutral-900/95 sm:left-auto sm:right-4 sm:w-96'
 const footerLink = 'font-medium underline underline-offset-2'
 const brushCursor = (size: number) => {
   const half = size / 2
@@ -104,6 +107,8 @@ export default function App() {
   const [progress, setProgress] = useState<number | null>(null)
   const [results, setResults] = useState<Result[]>([])
   const [reading, setReading] = useState(false)
+  // Aviso de que algo terminó mientras no se estaba en el editor. Solo lo cierra el usuario.
+  const [notice, setNotice] = useState<'done' | 'error' | null>(null)
   // Se guardan códigos y no textos, para que cambien con el idioma.
   const [error, setError] = useState('')
   const [audioError, setAudioError] = useState('')
@@ -125,9 +130,11 @@ export default function App() {
   const withSound = mode === 'sound'
   const animated = !!visual?.duration
   const length = audio ? Math.min(total, MAX_TOTAL, audio.duration - start) : 0
+  const clipLength = visual ? Math.min(clip, MAX_TOTAL, visual.duration - videoStart) : 0
+  // Lo que se va a repartir en stickers: el audio elegido o, sin sonido, el tramo del video.
+  const span = withSound ? length : animated ? clipLength : 0
   // Un resto de menos de medio segundo no justifica otro sticker.
-  const count = withSound && audio ? Math.max(1, Math.ceil((length - 0.5) / partLength)) : 1
-  const clipLength = visual ? Math.min(clip, MAX_ANIMATION, visual.duration - videoStart) : 0
+  const count = Math.max(1, Math.ceil((span - 0.5) / partLength))
   // Si el sonido es el del video, imagen y audio arrancan en el mismo punto.
   const linked = withSound && origin === 'video'
   const from = animated ? (linked ? start : videoStart) : 0
@@ -253,12 +260,12 @@ export default function App() {
 
   // Vista previa animada.
   useEffect(() => {
-    if (!visual || progress !== null) return
+    if (!visual) return
     let cancelled = false
     let timer = 0
     const began = performance.now()
     // La vista previa repite el mismo tramo que va a salir en el sticker.
-    const loop = (withSound ? Math.min(length || visual.duration, partLength) : clipLength) || 1
+    const loop = Math.min((withSound ? length : clipLength) || visual.duration, partLength) || 1
     const tick = async () => {
       const frame = await visual.frameAt(from + (((performance.now() - began) / 1000) % loop))
       if (cancelled || !canvas.current) return
@@ -271,7 +278,7 @@ export default function App() {
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [visual, style, progress, from, length, partLength, withSound, clipLength])
+  }, [visual, style, from, length, partLength, withSound, clipLength])
 
   // Los resultados viejos dejan de valer si cambia cualquier ajuste.
   useEffect(() => setResults([]), [mode, visual, audio, style, start, total, partLength, from, clip])
@@ -293,6 +300,7 @@ export default function App() {
     setError('')
     setProgress(0)
     setResults([])
+    setNotice(null)
     const controller = new AbortController()
     const { signal } = controller
     job.current = controller
@@ -300,20 +308,22 @@ export default function App() {
     const report = (index: number) => (fraction: number) => {
       if (!signal.aborted) setProgress(((index + fraction) / count) * 100)
     }
+    let source = visual
     // La imagen fija tal como se ve: PNG, y WebP si no pasa por el audio.
     const still = async () => {
       const target = document.createElement('canvas')
       target.width = target.height = SIZE
-      draw(target, await visual.frameAt(from), visual, style)
+      draw(target, await source.frameAt(from), source, style)
       return target
     }
     try {
+      source = await visual.clone()
       if (withSound && audio) {
         for (let index = 0; index < count; index++) {
           const offset = index * partLength
           const slice = sliceAudio(audio, start + offset, Math.min(partLength, length - offset))
           const name = count > 1 ? `sticker-${index + 1}` : 'sticker'
-          const video = await exportVideo(visual, style, slice.duration, slice, from + offset, report(index), signal)
+          const video = await exportVideo(source, style, slice.duration, slice, from + offset, report(index), signal)
           // El audio suelto y la imagen solo sirven para el camino "foto + audio" de WhatsApp.
           // Con un video o un GIF, el sonido ya va dentro del video.
           const sound = animated ? null : await exportAudio(slice, signal)
@@ -328,9 +338,16 @@ export default function App() {
           setResults([...done])
         }
       } else if (animated) {
-        const video = await exportVideo(visual, style, clipLength, null, from, report(0), signal)
-        const extension = video.type === 'video/webm' ? 'webm' : 'mp4'
-        done.push({ name: 'sticker', seconds: clipLength, files: [output(`sticker.${extension}`, video, 'video')] })
+        for (let index = 0; index < count; index++) {
+          const offset = index * partLength
+          const seconds = Math.min(partLength, clipLength - offset)
+          const name = count > 1 ? `sticker-${index + 1}` : 'sticker'
+          const video = await exportVideo(source, style, seconds, null, from + offset, report(index), signal)
+          signal.throwIfAborted()
+          const extension = video.type === 'video/webm' ? 'webm' : 'mp4'
+          done.push({ name, seconds, files: [output(`${name}.${extension}`, video, 'video')] })
+          setResults([...done])
+        }
       } else {
         const target = await still()
         const files = [output('sticker.png', await toPng(target), 'image')]
@@ -340,10 +357,15 @@ export default function App() {
       }
       signal.throwIfAborted()
       setResults(done)
+      if (location.hash !== '#crear') setNotice('done')
     } catch (reason) {
       // Los que ya salieron se conservan, aunque se cancele o falle uno.
-      if (!signal.aborted) setError(errorCode(reason))
+      if (!signal.aborted) {
+        setError(errorCode(reason))
+        if (location.hash !== '#crear') setNotice('error')
+      }
     } finally {
+      if (source !== visual) source.dispose()
       // Un proceso cancelado no debe tocar el estado del que lo reemplazó.
       if (job.current === controller) setProgress(null)
     }
@@ -353,6 +375,13 @@ export default function App() {
     job.current?.abort()
     job.current = null
     setProgress(null)
+  }
+
+  const seeResults = () => {
+    setNotice(null)
+    location.hash = 'crear'
+    // Después de que el editor se muestre.
+    window.setTimeout(() => resultsBox.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
   }
 
   const downloadZip = async () => {
@@ -458,7 +487,8 @@ export default function App() {
   }
 
   const openEditor = (next: Mode) => {
-    changeMode(next)
+    // Con algo generándose no se cambia de modo: se perdería lo hecho.
+    if (progress === null) changeMode(next)
     location.hash = 'crear'
   }
 
@@ -537,7 +567,7 @@ export default function App() {
             </div>
           )}
 
-          <fieldset disabled={busy} className="contents">
+          <fieldset className="contents">
             <div
               {...lock}
               className={`anim-up flex min-w-0 flex-col gap-5 ${ready ? '' : 'mx-auto w-full max-w-xl lg:col-span-3'}`}
@@ -674,7 +704,6 @@ export default function App() {
             </div>
 
             <div
-              {...lock}
               className={ready ? 'anim-up flex min-w-0 flex-col gap-5' : 'hidden'}
               style={{ animationDelay: '100ms' }}
             >
@@ -689,6 +718,7 @@ export default function App() {
                   onErasing={setErasing}
                   brush={brush}
                   onBrush={setBrush}
+                  readOnly={busy}
                   canUndo={style.erased.length > 0}
                   onUndo={() => setStyle({ ...style, erased: style.erased.slice(0, -1) })}
                 >
@@ -712,36 +742,53 @@ export default function App() {
                     }`}
                   />
                 </PreviewStage>
-                {visual && animated && !linked && (
-                  <>
-                    <Trim
-                      label={t.videoPosition}
-                      describe={t.range}
-                      peaks={videoPeaks}
-                      duration={visual.duration}
-                      start={videoStart}
-                      length={withSound ? Math.min(length || partLength, visual.duration) : clipLength}
-                      maxLength={MAX_ANIMATION}
-                      resizable={!withSound}
-                      onChange={(nextStart, nextLength) => {
-                        setVideoStart(nextStart)
-                        if (!withSound) setClip(nextLength)
-                      }}
-                    />
-                    {!withSound && <p className="text-sm text-neutral-500">{t.maxAnimation}</p>}
-                  </>
-                )}
-                <Controls
-                  t={t}
-                  style={style}
-                  onChange={setStyle}
-                  erasing={erasing}
-                  onErasing={toggleErasing}
-                  brush={brush}
-                  onBrush={setBrush}
-                  still={!animated && !withSound}
-                  transparentHint={animated || withSound ? t.transparentVideo : t.transparentImage}
-                />
+                <div {...lock} className="flex flex-col gap-4">
+                  {visual && animated && !linked && (
+                    <>
+                      <Trim
+                        label={t.videoPosition}
+                        describe={t.range}
+                        peaks={videoPeaks}
+                        duration={visual.duration}
+                        start={videoStart}
+                        length={withSound ? Math.min(length || partLength, visual.duration) : clipLength}
+                        maxLength={MAX_TOTAL}
+                        resizable={!withSound}
+                        onChange={(nextStart, nextLength) => {
+                          setVideoStart(nextStart)
+                          if (!withSound) setClip(nextLength)
+                        }}
+                      />
+                      {!withSound && (
+                        <div className="flex flex-col gap-2">
+                          <span className="text-sm font-medium">{t.maxPerSticker}</span>
+                          <SegmentedControl
+                            label={t.maxPerSticker}
+                            fullWidth
+                            options={[
+                              { value: '5', label: '5 s' },
+                              { value: '10', label: '10 s' },
+                            ]}
+                            value={String(partLength)}
+                            onChange={(value) => setPartLength(Number(value))}
+                          />
+                          <p className="text-sm text-neutral-500">{t.splitSilent(count)}</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  <Controls
+                    t={t}
+                    style={style}
+                    onChange={setStyle}
+                    erasing={erasing}
+                    onErasing={toggleErasing}
+                    brush={brush}
+                    onBrush={setBrush}
+                    still={!animated && !withSound}
+                    transparentHint={animated || withSound ? t.transparentVideo : t.transparentImage}
+                  />
+                </div>
               </Section>
             </div>
           </fieldset>
@@ -780,7 +827,12 @@ export default function App() {
             </div>
             {busy && (
               <>
-                <ProgressBar value={Math.round(progress)} color="accent" label={count > 1 ? `${t.generating} · ${t.readyOf(results.length, count)}` : t.generating} showValue />
+                <ProgressBar
+                  value={Math.round(progress)}
+                  color="accent"
+                  label={count > 1 ? `${t.generating} · ${t.readyOf(results.length, count)}` : t.generating}
+                  showValue
+                />
                 <Button className="w-full" color="red" icon={<X size={16} />} onClick={cancel}>
                   {t.cancel}
                 </Button>
@@ -811,21 +863,14 @@ export default function App() {
                   {results.map((result) => {
                     const [main] = result.files
                     return (
-                      <li
-                        key={main.url}
-                                                className="anim-pop flex min-w-0 flex-col gap-2"
-                      >
-                        {main.kind === 'video' ? (
-                          <video
-                            src={main.url}
-                            controls
-                            playsInline
-                            preload="metadata"
-                            className="checker aspect-square w-full rounded-2xl"
-                          />
-                        ) : (
-                          <img src={main.url} alt={result.name} className="checker aspect-square w-full rounded-2xl" />
-                        )}
+                      <li key={main.url} className="anim-pop flex min-w-0 flex-col gap-2">
+                        <ResultMedia
+                          t={t}
+                          src={main.url}
+                          name={result.name}
+                          video={main.kind === 'video'}
+                          sound={withSound}
+                        />
                         <p className="truncate text-center text-xs text-neutral-500">
                           {result.name}
                           {result.seconds > 0 && ` · ${round(result.seconds)} s`}
@@ -858,6 +903,44 @@ export default function App() {
           )}
         </main>
       </div>
+
+      {/* Fuera del editor, lo que se está generando sigue a la vista. */}
+      {busy && !editing && (
+        <div role="region" aria-label={t.generating} className={floating}>
+          <ProgressBar
+            value={Math.round(progress)}
+            color="accent"
+            label={count > 1 ? `${t.generating} · ${t.readyOf(results.length, count)}` : t.generating}
+            showValue
+          />
+          <div className="flex gap-2">
+            <Button className="flex-1" color="red" icon={<X size={16} />} onClick={cancel}>
+              {t.cancel}
+            </Button>
+            <Button className="flex-1" color="secondary" icon={<ArrowRight size={16} />} onClick={seeResults}>
+              {t.watch}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {!busy && notice && (
+        <div role="status" className={floating}>
+          <div className="flex items-center justify-between gap-3">
+            <p className="font-medium">{notice === 'done' ? t.ready(results.length) : translate(error)}</p>
+            <IconButton
+              color="secondary"
+              size="sm"
+              label={t.close}
+              icon={<X size={16} />}
+              onClick={() => setNotice(null)}
+            />
+          </div>
+          <Button className="w-full" color="accent" icon={<ArrowRight size={16} />} onClick={seeResults}>
+            {notice === 'done' ? t.seeResults : t.watch}
+          </Button>
+        </div>
+      )}
 
       {/* El pie llega de borde a borde, redondeado solo arriba. */}
       <Reveal className="app-footer [&>footer>*]:mx-auto [&>footer>*]:w-full [&>footer>*]:max-w-[78rem] [&>footer]:rounded-b-none [&>footer]:rounded-t-[2rem] [&>footer]:border-x-0 [&>footer]:border-b-0 [&>footer]:px-6 [&>footer]:py-10">

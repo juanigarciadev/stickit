@@ -43,7 +43,7 @@ const jsonLd = [
 
 /** Lo que se lee antes de que cargue React (y lo que ven los rastreadores sin JavaScript). */
 const content = `
-      <main style="max-width:48rem;margin:0 auto;padding:2rem 1rem;font-family:system-ui,sans-serif">
+      <main id="seo-content" style="max-width:48rem;margin:0 auto;padding:2rem 1rem;font-family:system-ui,sans-serif">
         <h1>${escape(`${t.landing.title} ${t.landing.highlight}`)}</h1>
         <p>${escape(t.landing.text)}</p>
         <h2>${escape(t.landing.featuresTitle)}</h2>
@@ -86,6 +86,14 @@ export function seo() {
       return {
         html: html.replace('<div id="root"></div>', () => `<div id="root">${content}</div>`),
         tags: [
+          // Con JavaScript ese contenido se oculta: si no, se ve como texto plano hasta que carga la aplicación.
+          // El fondo va acá para que tampoco haya un destello blanco antes de los estilos.
+          { tag: 'script', children: "document.documentElement.classList.add('js')", injectTo: 'head' },
+          {
+            tag: 'style',
+            children: '.js #seo-content{display:none}html{background:#fafafa}html.dark{background:#0a0a0a}',
+            injectTo: 'head',
+          },
           meta('description', DESCRIPTION),
           meta('theme-color', '#15803d'),
           meta('og:type', 'website', 'property'),

@@ -20,6 +20,7 @@ Sin dirección, esos elementos se omiten.
 - Título, descripción, Open Graph y Twitter.
 - Datos estructurados `WebApplication` y `FAQPage`.
 - El contenido de la portada dentro del HTML, para quien no ejecuta JavaScript. React lo reemplaza al cargar.
+  Con JavaScript se oculta, para que no parpadee como texto sin estilos.
 - `robots.txt`, `sitemap.xml` y `llms.txt`.
 
 Los textos salen de `src/i18n.ts`, así que no hay que actualizarlos en dos lados.

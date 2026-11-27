@@ -1,0 +1,41 @@
+{
+  "name": "stickit",
+  "description": "Stickers para WhatsApp desde fotos, GIFs y videos, con o sin sonido. Todo corre en el navegador.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@blossomui/react": "^2.3.0",
+    "@ffmpeg/core": "^0.12.10",
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
+    "fflate": "^0.8.3",
+    "lucide-react": "^1.81.0",
+    "mediabunny": "^1.66.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.32",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "autoprefixer": "^10.7.0",
+    "postcss": "^8.5.33",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.6"
+  },
+  "version": "1.0.0",
+  "author": "Juan Ignacio García",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/juanigarciadev/stickit.git"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

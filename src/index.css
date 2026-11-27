@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Piezas decorativas de la portada. */
+.sticker-float { rotate: var(--tilt); animation: float 6s ease-in-out infinite; }
+.sound-bar { animation: sound 0.9s ease-in-out infinite; }
+@keyframes float { 50% { transform: translateY(-14px); } }
+@keyframes sound { 50% { transform: scaleY(0.3); } }
+@media (prefers-reduced-motion: reduce) {
+  .sticker-float, .sound-bar { animation: none; }
+}
+
+:root { --blossom-accent: #15803d; --blossom-accent-contrast: #ffffff; color-scheme: light; }
+.dark { --blossom-accent: #4ade80; --blossom-accent-contrast: #052e16; color-scheme: dark; }
+
+/* Damero para que se vea qué parte es transparente. */
+.checker { background: repeating-conic-gradient(#d4d4d4 0% 25%, #f5f5f5 0% 50%) 0 0 / 20px 20px; }
+.dark .checker { background: repeating-conic-gradient(#262626 0% 25%, #404040 0% 50%) 0 0 / 20px 20px; }
+
+/* El Footer de Blossom solo recibe el nombre como texto: el icono se agrega por CSS. */
+.app-footer footer > div:first-child > div:first-child > span:first-child { display: flex; align-items: center; gap: 0.5rem; }
+.app-footer footer > div:first-child > div:first-child > span:first-child::before {
+  content: '';
+  width: 1.875rem;
+  height: 1.875rem;
+  background: url('/favicon.svg') center / contain no-repeat;
+}
+
+/*
+ * Entradas al aparecer. El retraso escalonado va en --delay.
+ * Usan "backwards" para no dejar un transform puesto al terminar, y se repiten
+ * solas cada vez que un bloque oculto vuelve a mostrarse.
+ */
+.anim-up, .anim-down, .anim-left, .anim-pop { animation: 0.6s cubic-bezier(0.22, 1, 0.36, 1) var(--delay, 0ms) backwards; }
+.anim-up { animation-name: in-up; }
+.anim-down { animation-name: in-down; }
+.anim-left { animation-name: in-left; }
+.anim-pop { animation-name: in-pop; animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes in-up { from { opacity: 0; translate: 0 24px; } }
+@keyframes in-down { from { opacity: 0; translate: 0 -18px; } }
+@keyframes in-left { from { opacity: 0; translate: -32px 0; } }
+@keyframes in-pop { from { opacity: 0; scale: 0.4; rotate: -12deg; } }
+@media (prefers-reduced-motion: reduce) {
+  .anim-up, .anim-down, .anim-left, .anim-pop { animation: none; }
+}
+
+/* Las tarjetas del hero llegan volando, una tras otra. */
+.anim-fly { animation: in-fly 0.9s cubic-bezier(0.34, 1.4, 0.64, 1) var(--delay, 0ms) backwards; }
+@keyframes in-fly { from { opacity: 0; translate: 160px 90px; scale: 0.4; rotate: 28deg; } }
+@media (prefers-reduced-motion: reduce) {
+  .anim-fly { animation: none; }
+}
+
+/* Arriba de todo la barra no tiene fondo, salvo que el menú esté abierto. */
+header.nav-clear:not(:has([aria-expanded='true'])) {
+  border-color: transparent;
+  background-color: transparent;
+  backdrop-filter: none;
+}
+
+/* El menú hamburguesa flota debajo de la barra, sin empujar la página. */
+header > div:nth-child(2) {
+  position: absolute;
+  inset-inline: -1px;
+  top: calc(100% + 0.5rem);
+  border-radius: 1rem;
+  border-width: 1px;
+  border-color: #e5e5e5;
+  background: #fff;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.25);
+}
+.dark header > div:nth-child(2) { border-color: #404040; background: #171717; }
+
+/* En celular: la marca a lo ancho, las columnas de a dos y el cierre centrado. */
+@media (max-width: 640px) {
+  /* !important porque Blossom define las columnas con un estilo en línea. */
+  .app-footer footer > div:first-child { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .app-footer footer > div:first-child > div:first-child { grid-column: 1 / -1; }
+  .app-footer footer > div:last-child { text-align: center; }
+}
+
+/*
+ * Pantalla completa en celular: se usa el alto visible (dvh), que descuenta las barras del navegador,
+ * y se deja aire para la muesca y la barra de inicio.
+ */
+.fullscreen-safe {
+  height: 100vh;
+  height: 100dvh;
+  padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right))
+    calc(env(safe-area-inset-bottom) + 1.5rem) max(0.75rem, env(safe-area-inset-left));
+  overscroll-behavior: contain;
+}
+.preview-room { container-type: size; }
+
+/* Con viewport-fit=cover, apaisado no debe quedar nada bajo la muesca. */
+body { padding-inline: env(safe-area-inset-left) env(safe-area-inset-right); }
+
+/* Celular apaisado: la imagen a un lado y los botones al otro. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .fullscreen-safe { display: grid; grid-template-columns: minmax(0, 1fr) 18rem; grid-template-rows: auto minmax(0, 1fr); }
+  .fullscreen-safe > .preview-room { grid-column: 1; grid-row: 1 / -1; height: 100%; }
+  .fullscreen-safe > .preview-top { grid-column: 2; grid-row: 1; }
+  .fullscreen-safe > .preview-tools { grid-column: 2; grid-row: 2; justify-content: flex-end; overflow-y: auto; }
+}
